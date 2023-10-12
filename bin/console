@@ -1,0 +1,8 @@
+#!/usr/bin/env ruby
+
+require "bundler/setup"
+require "foobara/autocrud"
+
+require "irb"
+require "pry"
+IRB.start(__FILE__)
