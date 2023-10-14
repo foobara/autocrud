@@ -10,6 +10,8 @@ module Foobara
       attr_accessor :base
 
       def create_type(type_declaration:, type_symbol: nil, domain: nil)
+        raise NoBaseSetError unless base
+
         type = load_type(type_declaration:, type_symbol:, domain:)
 
         domain = Domain.to_domain(type)
@@ -18,7 +20,7 @@ module Foobara
           full_domain_name = domain.full_domain_name
         end
 
-        PersistedType.transaction do
+        PersistedType.transaction(mode: :use_existing) do
           PersistedType.create(
             Util.remove_blank(
               type_declaration: type.declaration_data,
@@ -36,14 +38,20 @@ module Foobara
           Domain.create(domain)
         end
 
+        unless domain.global?
+          type_declaration = type_declaration.merge(model_module: domain.mod)
+        end
+
         type = domain.type_namespace.type_for_declaration(type_declaration)
 
         if type.registered?
           if type_symbol && type_symbol.to_sym != type.type_symbol
+            # :nocov:
             raise "Type symbol mismatch: #{type_symbol} versus #{type.type_symbol}"
+            # :nocov:
           end
         else
-          domain.namespace.register_type(type_symbol, type)
+          domain.type_namespace.register_type(type_symbol, type)
         end
 
         type
@@ -54,14 +62,16 @@ module Foobara
 
         base.register_entity_class(PersistedType, table_name: :persisted_types)
 
-        PersistedType.all do |persisted_type|
-          load_type(
-            declaration_data: persisted_type.declaration_data,
-            type_symbol: persisted_type.type_symbol,
-            domain: persisted_type.full_domain_name
-          )
+        PersistedType.transaction do
+          PersistedType.all do |persisted_type|
+            type = load_type(
+              type_declaration: persisted_type.type_declaration,
+              type_symbol: persisted_type.type_symbol,
+              domain: persisted_type.full_domain_name
+            )
 
-          create_autocrud_commands(type)
+            create_autocrud_commands(type)
+          end
         end
       end
 
