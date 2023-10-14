@@ -10,6 +10,8 @@ module Foobara
       attr_accessor :base
 
       def create_type(type_declaration:, type_symbol: nil, domain: nil)
+        raise NoBaseSetError unless base
+
         type = load_type(type_declaration:, type_symbol:, domain:)
 
         domain = Domain.to_domain(type)

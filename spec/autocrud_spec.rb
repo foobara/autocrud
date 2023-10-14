@@ -2,11 +2,9 @@ RSpec.describe Foobara::Autocrud do
   describe ".create_type" do
     context "when creating an entity" do
       before do
-        Foobara::Persistence.default_crud_driver = Foobara::Persistence::CrudDrivers::InMemory.new
-      end
-
-      after do
-        Foobara.reset_alls
+        if base
+          described_class.base = base
+        end
       end
 
       let(:type_declaration) do
@@ -23,9 +21,34 @@ RSpec.describe Foobara::Autocrud do
         }
       end
 
-      it "creates a persisted type record and an entity class" do
-        described_class.create_type(type_declaration:)
-        expect(SomeOrg::SomeDomain::User).to be < Foobara::Entity
+      context "when no base set" do
+        let(:base) { nil }
+
+        it "creates a persisted type record and an entity class" do
+          expect {
+            described_class.create_type(type_declaration:)
+          }.to raise_error(Foobara::Autocrud::NoBaseSetError)
+        end
+      end
+
+      context "when base set" do
+        let(:base) do
+          Foobara::Persistence.default_crud_driver = Foobara::Persistence::CrudDrivers::InMemory.new
+          Foobara::Persistence.default_base
+        end
+
+        before do
+          described_class.install!
+        end
+
+        after do
+          Foobara.reset_alls
+        end
+
+        it "creates a persisted type record and an entity class" do
+          described_class.create_type(type_declaration:)
+          expect(SomeOrg::SomeDomain::User).to be < Foobara::Entity
+        end
       end
     end
   end
