@@ -45,7 +45,7 @@ module Foobara
             raise "Type symbol mismatch: #{type_symbol} versus #{type.type_symbol}"
           end
         else
-          domain.namespace.register_type(type_symbol, type)
+          domain.type_namespace.register_type(type_symbol, type)
         end
 
         type
@@ -58,8 +58,8 @@ module Foobara
 
         PersistedType.transaction do
           PersistedType.all do |persisted_type|
-            load_type(
-              declaration_data: persisted_type.declaration_data,
+            type = load_type(
+              type_declaration: persisted_type.type_declaration,
               type_symbol: persisted_type.type_symbol,
               domain: persisted_type.full_domain_name
             )

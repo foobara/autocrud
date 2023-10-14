@@ -37,10 +37,6 @@ RSpec.describe Foobara::Autocrud do
           Foobara::Persistence.default_base
         end
 
-        before do
-          described_class.install!
-        end
-
         after do
           Foobara.reset_alls
         end
@@ -50,6 +46,7 @@ RSpec.describe Foobara::Autocrud do
             described_class.create_type(type_declaration:)
           end
           expect(SomeOrg::SomeDomain::User).to be < Foobara::Entity
+          described_class.install!
         end
       end
     end
