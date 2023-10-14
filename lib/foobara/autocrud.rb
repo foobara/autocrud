@@ -20,7 +20,7 @@ module Foobara
           full_domain_name = domain.full_domain_name
         end
 
-        PersistedType.transaction do
+        PersistedType.transaction(mode: :use_existing) do
           PersistedType.create(
             Util.remove_blank(
               type_declaration: type.declaration_data,
@@ -56,14 +56,16 @@ module Foobara
 
         base.register_entity_class(PersistedType, table_name: :persisted_types)
 
-        PersistedType.all do |persisted_type|
-          load_type(
-            declaration_data: persisted_type.declaration_data,
-            type_symbol: persisted_type.type_symbol,
-            domain: persisted_type.full_domain_name
-          )
+        PersistedType.transaction do
+          PersistedType.all do |persisted_type|
+            load_type(
+              declaration_data: persisted_type.declaration_data,
+              type_symbol: persisted_type.type_symbol,
+              domain: persisted_type.full_domain_name
+            )
 
-          create_autocrud_commands(type)
+            create_autocrud_commands(type)
+          end
         end
       end
 

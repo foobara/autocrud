@@ -46,7 +46,9 @@ RSpec.describe Foobara::Autocrud do
         end
 
         it "creates a persisted type record and an entity class" do
-          described_class.create_type(type_declaration:)
+          Foobara::Autocrud::PersistedType.transaction do
+            described_class.create_type(type_declaration:)
+          end
           expect(SomeOrg::SomeDomain::User).to be < Foobara::Entity
         end
       end
