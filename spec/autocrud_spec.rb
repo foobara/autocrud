@@ -6,6 +6,9 @@ RSpec.describe Foobara::Autocrud do
   after do
     Foobara.reset_alls
     Foobara::Autocrud::PersistedType.instance_variable_set("@entity_base", nil)
+    if Object.constants.include?(:SomeOrg)
+      Object.send(:remove_const, :SomeOrg)
+    end
   end
 
   let(:base) do
@@ -74,7 +77,7 @@ RSpec.describe Foobara::Autocrud do
   end
 
   describe ".install!" do
-    context "a type is persisted" do
+    context "when a type is persisted" do
       before do
         Foobara::Autocrud::PersistedType.transaction do
           Foobara::Autocrud::PersistedType.create(
@@ -89,14 +92,14 @@ RSpec.describe Foobara::Autocrud do
               name: "Person"
             },
             type_symbol: "Person",
-            full_domain_name: "Org::Dom"
+            full_domain_name: "SomeOrg::SomeDomain"
           )
         end
       end
 
       it "loads the type" do
         described_class.install!
-        expect(Org::Dom::Person).to be < Foobara::Entity
+        expect(SomeOrg::SomeDomain::Person).to be < Foobara::Entity
       end
     end
   end
