@@ -16,6 +16,8 @@ module Foobara
 
         domain = Domain.to_domain(type)
 
+        binding.pry
+
         unless domain.global?
           full_domain_name = domain.full_domain_name
         end
@@ -42,7 +44,9 @@ module Foobara
 
         if type.registered?
           if type_symbol && type_symbol.to_sym != type.type_symbol
+            # :nocov:
             raise "Type symbol mismatch: #{type_symbol} versus #{type.type_symbol}"
+            # :nocov:
           end
         else
           domain.type_namespace.register_type(type_symbol, type)
