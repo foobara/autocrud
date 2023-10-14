@@ -9,8 +9,8 @@ module Foobara
     class << self
       attr_accessor :base
 
-      def create_type(declaration_data:, type_symbol: nil, domain: nil)
-        type = load_type(declaration_data:, type_symbol:, domain:)
+      def create_type(type_declaration:, type_symbol: nil, domain: nil)
+        type = load_type(type_declaration:, type_symbol:, domain:)
 
         domain = Domain.to_domain(type)
 
@@ -20,39 +20,28 @@ module Foobara
 
         PersistedType.transaction do
           PersistedType.create(
-            type_declaration: type.declaration_data,
-            type_symbol: type.type_symbol,
-            full_domain_name:
+            Util.remove_blank(
+              type_declaration: type.declaration_data,
+              type_symbol: type.type_symbol,
+              full_domain_name:
+            )
           )
         end
       end
 
-      def load(persisted_type)
-        full_domain_name = persisted_type.full_domain_name
-        domain = begin
-          Domain.to_domain(full_domain_name)
-        rescue Foobara::Domain::NoSuchDomain
-          Domain.create(full_domain_name)
-        end
-
-        domain.name
-      end
-
-      def load_type(declaration_data:, type_symbol: nil, domain: nil)
+      def load_type(type_declaration:, type_symbol: nil, domain: nil)
         domain = begin
           Domain.to_domain(domain)
         rescue Foobara::Domain::NoSuchDomain
           Domain.create(domain)
         end
 
-        type = domain.namespace.type_for_declaration(declaration_data)
+        type = domain.type_namespace.type_for_declaration(type_declaration)
 
         if type.registered?
           if type_symbol && type_symbol.to_sym != type.type_symbol
             raise "Type symbol mismatch: #{type_symbol} versus #{type.type_symbol}"
           end
-
-          type_symbol = type.type_symbol
         else
           domain.namespace.register_type(type_symbol, type)
         end
