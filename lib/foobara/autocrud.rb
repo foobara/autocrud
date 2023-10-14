@@ -16,8 +16,6 @@ module Foobara
 
         domain = Domain.to_domain(type)
 
-        binding.pry
-
         unless domain.global?
           full_domain_name = domain.full_domain_name
         end
@@ -38,6 +36,10 @@ module Foobara
           Domain.to_domain(domain)
         rescue Foobara::Domain::NoSuchDomain
           Domain.create(domain)
+        end
+
+        unless domain.global?
+          type_declaration = type_declaration.merge(model_module: domain.mod)
         end
 
         type = domain.type_namespace.type_for_declaration(type_declaration)
