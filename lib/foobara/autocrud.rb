@@ -54,6 +54,10 @@ module Foobara
           domain.type_namespace.register_type(type_symbol, type)
         end
 
+        if type.extends_symbol?(:entity)
+          create_autocrud_commands(type.target_class)
+        end
+
         type
       end
 
@@ -69,14 +73,79 @@ module Foobara
               type_symbol: persisted_type.type_symbol,
               domain: persisted_type.full_domain_name
             )
-
-            create_autocrud_commands(type)
           end
         end
       end
 
-      def create_autocrud_commands(type)
+      def create_autocrud_commands(entity_class)
         # TODO: autocrud commands!
+        # commands:
+        #
+        # CreateUser
+        # UpdateUserAtom
+        # UpdateUserAggregate
+        #   can records be created in this situation?? or only updated?
+        # HardDeleteUser
+        # AppendToUserRatings
+        # RemoveFromUserRatings
+        # QueryUser
+        #
+        # types:
+        #
+        # User
+        #   UserAttributes
+        #   UserCreateAttributes
+        #   UserUpdateAtomAttributes
+        #     remove all required and defaults
+        #     primary key required
+        #   UserUpdateAggregateAttributes
+        #     convert all associations to their XUpdateAggregateAttributes types??
+        #   UserPrimaryKeyType ??
+        # if primary key created by db
+        #   no primary key in UserCreateAttributes
+        # if primary key created externally
+        #   primary key in UserCreateAttributes and is required
+        # TODO: make types usable in type declarations...
+        create_create_command(entity_class)
+      end
+
+      def create_create_command(entity_class)
+        command_class = Class.new(Foobara::Command)
+
+        domain = entity_class.domain
+
+        # TODO: make domain and domain_module the same thing to simplify some concepts
+        domain_module = if domain.global?
+                          Object
+                        else
+                          domain.mod
+                        end
+
+        domain_module.const_set("Create#{entity_class.entity_name}", command_class)
+
+        command_class.class_eval do
+          define_method :entity_class do
+            entity_class
+          end
+
+          # TODO: does this work with User instead of :User ?
+          # We can't come up with a cleaner way to do this?
+          # TODO: we should be allowed to just pass the type instead of transforming it to declaration_data
+          inputs entity_class.attributes_type.declaration_data
+          result entity_class
+
+          def execute
+            create_record
+
+            record
+          end
+
+          attr_accessor :record
+
+          def create_record
+            self.record = entity_class.create(inputs)
+          end
+        end
       end
     end
   end

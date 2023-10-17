@@ -69,8 +69,30 @@ RSpec.describe Foobara::Autocrud do
             Foobara::Autocrud::PersistedType.transaction do
               described_class.create_type(type_declaration:, domain: "SomeOrg::SomeDomain")
             end
+
             expect(SomeOrg::SomeDomain::User).to be < Foobara::Entity
           end
+        end
+      end
+
+      context "when autocreating crud commands" do
+        before do
+          described_class.create_type(type_declaration:)
+        end
+
+        it "Creates a CreateUser command" do
+          expect(SomeOrg::SomeDomain::CreateUser).to be < Foobara::Command
+
+          outcome = SomeOrg::SomeDomain::CreateUser.run(first_name: "f", last_name: "l")
+
+          expect(outcome).to be_success
+
+          user = outcome.result
+
+          expect(user).to be_a(SomeOrg::SomeDomain::User)
+          expect(user.first_name).to eq("f")
+          expect(user.last_name).to eq("l")
+          expect(user.id).to be_a(Integer)
         end
       end
     end
