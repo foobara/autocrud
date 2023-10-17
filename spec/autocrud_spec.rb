@@ -94,6 +94,37 @@ RSpec.describe Foobara::Autocrud do
           expect(user.last_name).to eq("l")
           expect(user.id).to be_a(Integer)
         end
+
+        context "without a domain" do
+          let(:type_declaration) do
+            {
+              type: :entity,
+              attributes_declaration: {
+                first_name: :string,
+                last_name: :string,
+                id: :integer
+              },
+              primary_key: :id,
+              name: "User"
+            }
+          end
+
+          it "Creates a CreateUser command" do
+            expect(CreateUser).to be < Foobara::Command
+
+            outcome = CreateUser.run(first_name: "f", last_name: "l")
+
+            expect(outcome).to be_success
+
+            user = outcome.result
+
+            # TODO: just put this in the global namespace if not using domains.
+            expect(user).to be_a(Foobara::Entity::User)
+            expect(user.first_name).to eq("f")
+            expect(user.last_name).to eq("l")
+            expect(user.id).to be_a(Integer)
+          end
+        end
       end
     end
   end

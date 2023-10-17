@@ -68,7 +68,7 @@ module Foobara
 
         PersistedType.transaction do
           PersistedType.all do |persisted_type|
-            type = load_type(
+            load_type(
               type_declaration: persisted_type.type_declaration,
               type_symbol: persisted_type.type_symbol,
               domain: persisted_type.full_domain_name
