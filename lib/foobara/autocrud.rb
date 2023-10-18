@@ -32,14 +32,27 @@ module Foobara
       end
 
       def load_type(type_declaration:, type_symbol: nil, domain: nil)
+        # TODO: do we need this?
+        # if domain.nil?
+        #   desugarizer = Foobara::TypeDeclarations::Handlers::ExtendModelTypeDeclaration::
+        #       AttributesHandlerDesugarizer.instance
+        #
+        #   domain = if desugarizer.applicable?(type_declaration)
+        #              desugarizer.desugarize(type_declaration)[:model_module]
+        #            else
+        #              desugarizer = Foobara::TypeDeclarations::Handlers::ExtendEntityTypeDeclaration::
+        #                  AttributesHandlerDesugarizer.instance
+        #
+        #              if desugarizer.applicable?(type_declaration)
+        #                desugarizer.desugarize(type_declaration)[:model_module]
+        #              end
+        #            end
+        # end
+
         domain = begin
           Domain.to_domain(domain)
         rescue Foobara::Domain::NoSuchDomain
           Domain.create(domain)
-        end
-
-        unless domain.global?
-          type_declaration = type_declaration.merge(model_module: domain.mod)
         end
 
         type = domain.type_namespace.type_for_declaration(type_declaration)
@@ -107,6 +120,51 @@ module Foobara
         #   primary key in UserCreateAttributes and is required
         # TODO: make types usable in type declarations...
         create_create_command(entity_class)
+        create_update_user_atom_command(entity_class)
+      end
+
+      def create_update_user_atom_command(entity_class)
+        command_class = Class.new(Foobara::Command)
+
+        domain = entity_class.domain
+
+        # TODO: make domain and domain_module the same thing to simplify some concepts
+        domain_module = if domain.global?
+                          Object
+                        else
+                          domain.mod
+                        end
+
+        domain_module.const_set("Update#{entity_class.entity_name}Atom", command_class)
+
+        command_class.class_eval do
+          define_method :entity_class do
+            entity_class
+          end
+
+          # TODO: make this work with just inputs :UserAttributesForAtomUpdate
+          # Should this be moved to this project instead of living in entities?
+          inputs Foobara::Command::EntityHelpers.type_declaration_for_record_atom_update(entity_class)
+          result entity_class # seems like we should just use nil?
+
+          def execute
+            update_record
+
+            record
+          end
+
+          attr_accessor :record
+
+          def load_records
+            self.record = entity_class.load(id)
+          end
+
+          def update_record
+            inputs.each_pair do |attribute_name, value|
+              record.write_attribute(attribute_name, value)
+            end
+          end
+        end
       end
 
       def create_create_command(entity_class)

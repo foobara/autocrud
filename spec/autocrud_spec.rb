@@ -3,12 +3,27 @@ RSpec.describe Foobara::Autocrud do
     described_class.base = base
   end
 
-  after do
+  def remove_automatically_created_constants
+    %i[
+      SomeOrg
+      CreateUser
+      UpdateUserAtom
+    ].each do |const|
+      if Object.constants.include?(const)
+        Object.send(:remove_const, const)
+      end
+    end
+  end
+
+  def reset_alls
     Foobara.reset_alls
     Foobara::Autocrud::PersistedType.instance_variable_set("@entity_base", nil)
-    if Object.constants.include?(:SomeOrg)
-      Object.send(:remove_const, :SomeOrg)
-    end
+
+    remove_automatically_created_constants
+  end
+
+  after do
+    reset_alls
   end
 
   let(:base) do
@@ -17,6 +32,33 @@ RSpec.describe Foobara::Autocrud do
   end
 
   describe ".create_type" do
+    context "when creating a non-model type" do
+      let(:type_symbol) { :whole_number }
+      let(:type_declaration) do
+        {
+          type: :integer,
+          min: 1
+        }
+      end
+      let(:domain) { "SomeOrg::SomeDomain" }
+
+      it "creates and registers the type and creates a persisted type record" do
+        described_class.create_type(type_declaration:, type_symbol:, domain:)
+
+        persisted_type = Foobara::Autocrud::PersistedType.transaction do
+          Foobara::Autocrud::PersistedType.all.to_a
+        end
+        expect(persisted_type.size).to eq(1)
+        persisted_type = persisted_type.first
+        expect(persisted_type.type_declaration).to eq(type_declaration)
+        expect(persisted_type.full_domain_name).to eq(domain)
+        expect(persisted_type.type_symbol).to eq(type_symbol)
+
+        type = SomeOrg::SomeDomain.foobara_domain.type_namespace.type_for_symbol(:whole_number)
+        expect(type.declaration_data).to eq(type_declaration)
+      end
+    end
+
     context "when creating an entity" do
       let(:type_declaration) do
         {
@@ -48,10 +90,10 @@ RSpec.describe Foobara::Autocrud do
             described_class.create_type(type_declaration:)
           end
           expect(SomeOrg::SomeDomain::User).to be < Foobara::Entity
-          described_class.install!
         end
 
         context "when passing in domain name" do
+          let(:domain) { "SomeOrg::SomeDomain" }
           let(:type_declaration) do
             {
               type: :entity,
@@ -61,13 +103,14 @@ RSpec.describe Foobara::Autocrud do
                 id: :integer
               },
               primary_key: :id,
-              name: "User"
+              name: "User",
+              model_module: domain
             }
           end
 
           it "creates a persisted type record and an entity class" do
             Foobara::Autocrud::PersistedType.transaction do
-              described_class.create_type(type_declaration:, domain: "SomeOrg::SomeDomain")
+              described_class.create_type(type_declaration:, domain:)
             end
 
             expect(SomeOrg::SomeDomain::User).to be < Foobara::Entity
@@ -80,49 +123,99 @@ RSpec.describe Foobara::Autocrud do
           described_class.create_type(type_declaration:)
         end
 
-        it "Creates a CreateUser command" do
-          expect(SomeOrg::SomeDomain::CreateUser).to be < Foobara::Command
-
-          outcome = SomeOrg::SomeDomain::CreateUser.run(first_name: "f", last_name: "l")
-
-          expect(outcome).to be_success
-
-          user = outcome.result
-
-          expect(user).to be_a(SomeOrg::SomeDomain::User)
-          expect(user.first_name).to eq("f")
-          expect(user.last_name).to eq("l")
-          expect(user.id).to be_a(Integer)
-        end
-
-        context "without a domain" do
-          let(:type_declaration) do
-            {
-              type: :entity,
-              attributes_declaration: {
-                first_name: :string,
-                last_name: :string,
-                id: :integer
-              },
-              primary_key: :id,
-              name: "User"
-            }
-          end
-
+        context "when autocreating Create command" do
           it "Creates a CreateUser command" do
-            expect(CreateUser).to be < Foobara::Command
+            expect(SomeOrg::SomeDomain::CreateUser).to be < Foobara::Command
 
-            outcome = CreateUser.run(first_name: "f", last_name: "l")
+            outcome = SomeOrg::SomeDomain::CreateUser.run(first_name: "f", last_name: "l")
 
             expect(outcome).to be_success
 
             user = outcome.result
 
-            # TODO: just put this in the global namespace if not using domains.
-            expect(user).to be_a(Foobara::Entity::User)
+            expect(user).to be_a(SomeOrg::SomeDomain::User)
             expect(user.first_name).to eq("f")
             expect(user.last_name).to eq("l")
             expect(user.id).to be_a(Integer)
+          end
+
+          context "without a domain" do
+            let(:type_declaration) do
+              {
+                type: :entity,
+                attributes_declaration: {
+                  first_name: :string,
+                  last_name: :string,
+                  id: :integer
+                },
+                primary_key: :id,
+                name: "User"
+              }
+            end
+
+            it "Creates a CreateUser command" do
+              expect(CreateUser).to be < Foobara::Command
+
+              outcome = CreateUser.run(first_name: "f", last_name: "l")
+
+              expect(outcome).to be_success
+
+              user = outcome.result
+
+              # TODO: just put this in the global namespace if not using domains.
+              expect(user).to be_a(Foobara::Entity::User)
+              expect(user.first_name).to eq("f")
+              expect(user.last_name).to eq("l")
+              expect(user.id).to be_a(Integer)
+            end
+          end
+        end
+
+        context "when autocreating UpdateAtom command" do
+          it "Creates a CreateUser command" do
+            expect(SomeOrg::SomeDomain::UpdateUserAtom).to be < Foobara::Command
+
+            user = SomeOrg::SomeDomain::CreateUser.run!(first_name: "f", last_name: "l")
+
+            outcome = SomeOrg::SomeDomain::UpdateUserAtom.run(first_name: "ff", id: user.id)
+
+            expect(outcome).to be_success
+            user = outcome.result
+
+            expect(user.first_name).to eq("ff")
+            expect(user.last_name).to eq("l")
+            expect(user.id).to be_a(Integer)
+          end
+
+          context "without a domain" do
+            let(:type_declaration) do
+              {
+                type: :entity,
+                attributes_declaration: {
+                  first_name: :string,
+                  last_name: :string,
+                  id: :integer
+                },
+                primary_key: :id,
+                name: "User"
+              }
+            end
+
+            it "Creates a CreateUser command" do
+              expect(CreateUser).to be < Foobara::Command
+
+              outcome = CreateUser.run(first_name: "f", last_name: "l")
+
+              expect(outcome).to be_success
+
+              user = outcome.result
+
+              # TODO: just put this in the global namespace if not using domains.
+              expect(user).to be_a(Foobara::Entity::User)
+              expect(user.first_name).to eq("f")
+              expect(user.last_name).to eq("l")
+              expect(user.id).to be_a(Integer)
+            end
           end
         end
       end
@@ -142,7 +235,8 @@ RSpec.describe Foobara::Autocrud do
                 id: :integer
               },
               primary_key: :id,
-              name: "Person"
+              name: "Person",
+              model_module: "SomeOrg::SomeDomain"
             },
             type_symbol: "Person",
             full_domain_name: "SomeOrg::SomeDomain"

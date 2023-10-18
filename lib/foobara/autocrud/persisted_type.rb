@@ -1,5 +1,6 @@
 module Foobara
   module Autocrud
+    # TODO: why does this wind up on the global namespace??
     class PersistedType < Entity
       attributes type: :attributes,
                  element_type_declarations: {
