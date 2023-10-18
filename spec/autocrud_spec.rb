@@ -186,36 +186,23 @@ RSpec.describe Foobara::Autocrud do
             expect(user.last_name).to eq("l")
             expect(user.id).to be_a(Integer)
           end
+        end
 
-          context "without a domain" do
-            let(:type_declaration) do
-              {
-                type: :entity,
-                attributes_declaration: {
-                  first_name: :string,
-                  last_name: :string,
-                  id: :integer
-                },
-                primary_key: :id,
-                name: "User"
-              }
-            end
+        context "when autocreating UpdateAggregate command" do
+          # TODO: add some associations to User or move test code from foobara to here.
+          it "Creates a CreateUser command" do
+            expect(SomeOrg::SomeDomain::UpdateUserAggregate).to be < Foobara::Command
 
-            it "Creates a CreateUser command" do
-              expect(CreateUser).to be < Foobara::Command
+            user = SomeOrg::SomeDomain::CreateUser.run!(first_name: "f", last_name: "l")
 
-              outcome = CreateUser.run(first_name: "f", last_name: "l")
+            outcome = SomeOrg::SomeDomain::UpdateUserAggregate.run(first_name: "ff", id: user.id)
 
-              expect(outcome).to be_success
+            expect(outcome).to be_success
+            user = outcome.result
 
-              user = outcome.result
-
-              # TODO: just put this in the global namespace if not using domains.
-              expect(user).to be_a(Foobara::Entity::User)
-              expect(user.first_name).to eq("f")
-              expect(user.last_name).to eq("l")
-              expect(user.id).to be_a(Integer)
-            end
+            expect(user.first_name).to eq("ff")
+            expect(user.last_name).to eq("l")
+            expect(user.id).to be_a(Integer)
           end
         end
       end
