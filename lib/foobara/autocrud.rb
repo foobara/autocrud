@@ -32,23 +32,6 @@ module Foobara
       end
 
       def load_type(type_declaration:, type_symbol: nil, domain: nil)
-        # TODO: do we need this?
-        # if domain.nil?
-        #   desugarizer = Foobara::TypeDeclarations::Handlers::ExtendModelTypeDeclaration::
-        #       AttributesHandlerDesugarizer.instance
-        #
-        #   domain = if desugarizer.applicable?(type_declaration)
-        #              desugarizer.desugarize(type_declaration)[:model_module]
-        #            else
-        #              desugarizer = Foobara::TypeDeclarations::Handlers::ExtendEntityTypeDeclaration::
-        #                  AttributesHandlerDesugarizer.instance
-        #
-        #              if desugarizer.applicable?(type_declaration)
-        #                desugarizer.desugarize(type_declaration)[:model_module]
-        #              end
-        #            end
-        # end
-
         domain = begin
           Domain.to_domain(domain)
         rescue Foobara::Domain::NoSuchDomain
@@ -101,6 +84,8 @@ module Foobara
         # HardDeleteUser
         # AppendToUserRatings
         # RemoveFromUserRatings
+        # FindUser
+        # FindUserBy
         # QueryUser
         #
         # types:
@@ -120,10 +105,12 @@ module Foobara
         #   primary key in UserCreateAttributes and is required
         # TODO: make types usable in type declarations...
         create_create_command(entity_class)
-        create_update_user_atom_command(entity_class)
+        create_update_atom_command(entity_class)
+        create_update_aggregate_command(entity_class)
+        create_hard_delete_command(entity_class)
       end
 
-      def create_update_user_atom_command(entity_class)
+      def create_update_atom_command(entity_class)
         command_class = Class.new(Foobara::Command)
 
         domain = entity_class.domain
@@ -167,6 +154,48 @@ module Foobara
         end
       end
 
+      def create_update_aggregate_command(entity_class)
+        command_class = Class.new(Foobara::Command)
+
+        domain = entity_class.domain
+
+        # TODO: make domain and domain_module the same thing to simplify some concepts
+        domain_module = if domain.global?
+                          Object
+                        else
+                          domain.mod
+                        end
+
+        domain_module.const_set("Update#{entity_class.entity_name}Aggregate", command_class)
+
+        command_class.class_eval do
+          define_method :entity_class do
+            entity_class
+          end
+
+          # TODO: does this work with User instead of :User ?
+          # We can't come up with a cleaner way to do this?
+          inputs Foobara::Command::EntityHelpers.type_declaration_for_record_aggregate_update(entity_class)
+          result entity_class # seems like we should just use nil?
+
+          def execute
+            update_record
+
+            record
+          end
+
+          attr_accessor :record
+
+          def load_records
+            self.record = entity_class.load(id)
+          end
+
+          def update_record
+            Foobara::Command::EntityHelpers.update_aggregate(record, inputs)
+          end
+        end
+      end
+
       def create_create_command(entity_class)
         command_class = Class.new(Foobara::Command)
 
@@ -202,6 +231,51 @@ module Foobara
 
           def create_record
             self.record = entity_class.create(inputs)
+          end
+        end
+      end
+
+      def create_hard_delete_command(entity_class)
+        command_class = Class.new(Foobara::Command)
+
+        domain = entity_class.domain
+
+        # TODO: make domain and domain_module the same thing to simplify some concepts
+        domain_module = if domain.global?
+                          Object
+                        else
+                          domain.mod
+                        end
+
+        domain_module.const_set("HardDelete#{entity_class.entity_name}", command_class)
+
+        command_class.class_eval do
+          singleton_class.define_method :record_method_name do
+            @record_method_name ||= Util.underscore(entity_class.entity_name)
+          end
+
+          foobara_delegate :record_method_name, to: :class
+
+          def record
+            send(record_method_name)
+          end
+
+          # TODO: does this work with User instead of :User ?
+          # We can't come up with a cleaner way to do this?
+          # TODO: make this work with entity classes!! no reason not to and very inconvenient
+          inputs Util.underscore(entity_class.entity_name) => entity_class
+          result entity_class
+
+          load_all
+
+          def execute
+            delete_record
+
+            record
+          end
+
+          def delete_record
+            record.hard_delete!
           end
         end
       end
