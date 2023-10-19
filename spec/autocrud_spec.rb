@@ -171,8 +171,24 @@ RSpec.describe Foobara::Autocrud do
           end
         end
 
+        context "when autocreating HardDelete command" do
+          it "Creates a HardDeleteUser command", :focus do
+            expect(SomeOrg::SomeDomain::HardDeleteUser).to be < Foobara::Command
+
+            user = SomeOrg::SomeDomain::CreateUser.run!(first_name: "f", last_name: "l")
+
+            outcome = SomeOrg::SomeDomain::HardDeleteUser.run(user:)
+
+            expect(outcome).to be_success
+            user = outcome.result
+
+            expect(user).to be_a(Foobara::Entity::User)
+            expect(user).to be_hard_deleted
+          end
+        end
+
         context "when autocreating UpdateAtom command" do
-          it "Creates a CreateUser command" do
+          it "Creates a UpdateUserAtom command" do
             expect(SomeOrg::SomeDomain::UpdateUserAtom).to be < Foobara::Command
 
             user = SomeOrg::SomeDomain::CreateUser.run!(first_name: "f", last_name: "l")
@@ -190,7 +206,7 @@ RSpec.describe Foobara::Autocrud do
 
         context "when autocreating UpdateAggregate command" do
           # TODO: add some associations to User or move test code from foobara to here.
-          it "Creates a CreateUser command" do
+          it "Creates a UpdateUserAggregate command" do
             expect(SomeOrg::SomeDomain::UpdateUserAggregate).to be < Foobara::Command
 
             user = SomeOrg::SomeDomain::CreateUser.run!(first_name: "f", last_name: "l")

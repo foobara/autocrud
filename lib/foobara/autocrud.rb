@@ -105,11 +105,12 @@ module Foobara
         #   primary key in UserCreateAttributes and is required
         # TODO: make types usable in type declarations...
         create_create_command(entity_class)
-        create_update_user_atom_command(entity_class)
-        create_update_user_aggregate_command(entity_class)
+        create_update_atom_command(entity_class)
+        create_update_aggregate_command(entity_class)
+        create_hard_delete_command(entity_class)
       end
 
-      def create_update_user_atom_command(entity_class)
+      def create_update_atom_command(entity_class)
         command_class = Class.new(Foobara::Command)
 
         domain = entity_class.domain
@@ -153,7 +154,7 @@ module Foobara
         end
       end
 
-      def create_update_user_aggregate_command(entity_class)
+      def create_update_aggregate_command(entity_class)
         command_class = Class.new(Foobara::Command)
 
         domain = entity_class.domain
@@ -230,6 +231,51 @@ module Foobara
 
           def create_record
             self.record = entity_class.create(inputs)
+          end
+        end
+      end
+
+      def create_hard_delete_command(entity_class)
+        command_class = Class.new(Foobara::Command)
+
+        domain = entity_class.domain
+
+        # TODO: make domain and domain_module the same thing to simplify some concepts
+        domain_module = if domain.global?
+                          Object
+                        else
+                          domain.mod
+                        end
+
+        domain_module.const_set("HardDelete#{entity_class.entity_name}", command_class)
+
+        command_class.class_eval do
+          singleton_class.define_method :record_method_name do
+            @record_method_name ||= Util.underscore(entity_class.entity_name)
+          end
+
+          foobara_delegate :record_method_name, to: :class
+
+          def record
+            send(record_method_name)
+          end
+
+          # TODO: does this work with User instead of :User ?
+          # We can't come up with a cleaner way to do this?
+          # TODO: make this work with entity classes!! no reason not to and very inconvenient
+          inputs Util.underscore(entity_class.entity_name) => entity_class
+          result entity_class
+
+          load_all
+
+          def execute
+            delete_record
+
+            record
+          end
+
+          def delete_record
+            record.hard_delete!
           end
         end
       end
