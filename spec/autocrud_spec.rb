@@ -172,18 +172,20 @@ RSpec.describe Foobara::Autocrud do
         end
 
         context "when autocreating HardDelete command" do
-          it "Creates a HardDeleteUser command", :focus do
+          it "Creates a HardDeleteUser command" do
             expect(SomeOrg::SomeDomain::HardDeleteUser).to be < Foobara::Command
 
-            user = SomeOrg::SomeDomain::CreateUser.run!(first_name: "f", last_name: "l")
+            SomeOrg::SomeDomain::User.transaction do
+              user = SomeOrg::SomeDomain::CreateUser.run!(first_name: "f", last_name: "l")
 
-            outcome = SomeOrg::SomeDomain::HardDeleteUser.run(user:)
+              outcome = SomeOrg::SomeDomain::HardDeleteUser.run(user:)
 
-            expect(outcome).to be_success
-            user = outcome.result
+              expect(outcome).to be_success
+              user = outcome.result
 
-            expect(user).to be_a(Foobara::Entity::User)
-            expect(user).to be_hard_deleted
+              expect(user).to be_a(SomeOrg::SomeDomain::User)
+              expect(user).to be_hard_deleted
+            end
           end
         end
 
