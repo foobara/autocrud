@@ -54,7 +54,7 @@ RSpec.describe Foobara::Autocrud do
         expect(persisted_type.full_domain_name).to eq(domain)
         expect(persisted_type.type_symbol).to eq(type_symbol)
 
-        type = SomeOrg::SomeDomain.foobara_domain.type_namespace.type_for_symbol(:whole_number)
+        type = SomeOrg::SomeDomain.foobara_type_namespace.type_for_symbol(:whole_number)
         expect(type.declaration_data).to eq(type_declaration)
       end
     end
@@ -70,7 +70,7 @@ RSpec.describe Foobara::Autocrud do
           },
           primary_key: :id,
           name: "User",
-          model_module: Foobara::Domain.create("SomeOrg::SomeDomain").mod
+          model_module: Foobara::Domain.create("SomeOrg::SomeDomain")
         }
       end
 

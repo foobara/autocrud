@@ -16,16 +16,12 @@ module Foobara
 
         domain = Domain.to_domain(type)
 
-        unless domain.global?
-          full_domain_name = domain.full_domain_name
-        end
-
         PersistedType.transaction(mode: :use_existing) do
           PersistedType.create(
             Util.remove_blank(
               type_declaration: type.declaration_data,
               type_symbol: type.type_symbol,
-              full_domain_name:
+              full_domain_name: domain.scoped_full_name
             )
           )
         end
@@ -34,11 +30,11 @@ module Foobara
       def load_type(type_declaration:, type_symbol: nil, domain: nil)
         domain = begin
           Domain.to_domain(domain)
-        rescue Foobara::Domain::NoSuchDomain
+        rescue Domain::NoSuchDomain
           Domain.create(domain)
         end
 
-        type = domain.type_namespace.type_for_declaration(type_declaration)
+        type = domain.foobara_type_namespace.type_for_declaration(type_declaration)
 
         if type.registered?
           if type_symbol && type_symbol.to_sym != type.type_symbol
@@ -47,7 +43,7 @@ module Foobara
             # :nocov:
           end
         else
-          domain.type_namespace.register_type(type_symbol, type)
+          domain.foobara_type_namespace.register_type(type_symbol, type)
         end
 
         if type.extends_symbol?(:entity)
@@ -111,20 +107,10 @@ module Foobara
       end
 
       def create_update_atom_command(entity_class)
-        command_class = Class.new(Foobara::Command)
-
         domain = entity_class.domain
+        command_name = [*domain.scoped_full_path, "Update#{entity_class.entity_name}Atom"].join("::")
 
-        # TODO: make domain and domain_module the same thing to simplify some concepts
-        domain_module = if domain.global?
-                          Object
-                        else
-                          domain.mod
-                        end
-
-        domain_module.const_set("Update#{entity_class.entity_name}Atom", command_class)
-
-        command_class.class_eval do
+        Util.make_class command_name, Foobara::Command do
           define_method :entity_class do
             entity_class
           end
@@ -155,20 +141,10 @@ module Foobara
       end
 
       def create_update_aggregate_command(entity_class)
-        command_class = Class.new(Foobara::Command)
-
         domain = entity_class.domain
+        command_name = [*domain.scoped_full_path, "Update#{entity_class.entity_name}Aggregate"].join("::")
 
-        # TODO: make domain and domain_module the same thing to simplify some concepts
-        domain_module = if domain.global?
-                          Object
-                        else
-                          domain.mod
-                        end
-
-        domain_module.const_set("Update#{entity_class.entity_name}Aggregate", command_class)
-
-        command_class.class_eval do
+        Util.make_class command_name, Foobara::Command do
           define_method :entity_class do
             entity_class
           end
@@ -197,20 +173,10 @@ module Foobara
       end
 
       def create_create_command(entity_class)
-        command_class = Class.new(Foobara::Command)
-
         domain = entity_class.domain
+        command_name = [*domain.scoped_full_path, "Create#{entity_class.entity_name}"].join("::")
 
-        # TODO: make domain and domain_module the same thing to simplify some concepts
-        domain_module = if domain.global?
-                          Object
-                        else
-                          domain.mod
-                        end
-
-        domain_module.const_set("Create#{entity_class.entity_name}", command_class)
-
-        command_class.class_eval do
+        Util.make_class(command_name, Foobara::Command) do
           define_method :entity_class do
             entity_class
           end
@@ -236,20 +202,10 @@ module Foobara
       end
 
       def create_hard_delete_command(entity_class)
-        command_class = Class.new(Foobara::Command)
-
         domain = entity_class.domain
+        command_name = [*domain.scoped_full_path, "HardDelete#{entity_class.entity_name}"].join("::")
 
-        # TODO: make domain and domain_module the same thing to simplify some concepts
-        domain_module = if domain.global?
-                          Object
-                        else
-                          domain.mod
-                        end
-
-        domain_module.const_set("HardDelete#{entity_class.entity_name}", command_class)
-
-        command_class.class_eval do
+        Util.make_class(command_name, Foobara::Command) do
           singleton_class.define_method :record_method_name do
             @record_method_name ||= Util.underscore(entity_class.entity_name)
           end

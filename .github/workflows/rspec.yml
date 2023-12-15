@@ -48,6 +48,7 @@ jobs:
           if [ -d foobara ]; then
             echo pulling
             cd foobara
+          # TODO: this is backwards!! Should instead be AUTOCRUD_KEY!
             ssh-agent sh -c 'echo "${{ secrets.FOOBARA_KEY }}" | ssh-add - &&
               git fetch --depth=1 origin $foobara_sha1 &&
               if git rev-parse --verify -q $foobara_branch; then
