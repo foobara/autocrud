@@ -31,5 +31,4 @@ RSpec.configure do |config|
 end
 
 require "foobara/autocrud"
-
-Foobara::Util.require_directory("#{__dir__}/../../foobara/spec/support")
+require "foobara/spec_helpers/all"
