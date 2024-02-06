@@ -27,14 +27,14 @@ module Foobara
         end
       end
 
-      def load_type(type_declaration:, type_symbol: nil, domain: nil)
+      def load_type(type_declaration:, type_symbol: nil, domain: GlobalDomain)
         domain = begin
           Domain.to_domain(domain)
         rescue Domain::NoSuchDomain
           Domain.create(domain)
         end
 
-        type = domain.foobara_type_namespace.type_for_declaration(type_declaration)
+        type = domain.foobara_type_from_declaration(type_declaration)
 
         if type.registered?
           if type_symbol && type_symbol.to_sym != type.type_symbol
@@ -43,7 +43,9 @@ module Foobara
             # :nocov:
           end
         else
-          domain.foobara_type_namespace.register_type(type_symbol, type)
+          type.type_symbol = type_symbol
+          type.foobara_parent_namespace ||= domain
+          type.foobara_parent_namespace.foobara_register(type)
         end
 
         if type.extends_symbol?(:entity)
@@ -184,7 +186,7 @@ module Foobara
           # TODO: does this work with User instead of :User ?
           # We can't come up with a cleaner way to do this?
           # TODO: we should be allowed to just pass the type instead of transforming it to declaration_data
-          inputs entity_class.attributes_type.declaration_data
+          inputs entity_class.attributes_type
           result entity_class
 
           def execute
