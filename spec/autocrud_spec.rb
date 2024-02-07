@@ -344,6 +344,88 @@ RSpec.describe Foobara::Autocrud do
               expect(last_review.rating).to be(2)
             end
           end
+
+          context "when creating a new record through appending" do
+            it "creates a new record" do
+              review = SomeOrg::SomeDomain::CreateReview.run!(rating: 1, thoughts: "t")
+              new_review = { rating: 2, thoughts: "t2" }
+
+              user = SomeOrg::SomeDomain::CreateUser.run!(first_name: "f", last_name: "l", reviews: [review])
+
+              expect(user.reviews.size).to be(1)
+
+              outcome = SomeOrg::SomeDomain::AppendToUserReviews.run(user: user.id, element_to_append: new_review)
+
+              expect(outcome).to be_success
+
+              SomeOrg::SomeDomain::User.transaction do
+                user = SomeOrg::SomeDomain::FindUser.run!(id: user.id)
+
+                expect(user.reviews.size).to be(2)
+
+                first_review = user.reviews.first
+                last_review = user.reviews.last
+
+                expect(first_review.rating).to be(1)
+                expect(first_review.thoughts).to eq("t")
+                expect(last_review.rating).to be(2)
+                expect(last_review.thoughts).to eq("t2")
+              end
+            end
+          end
+        end
+
+        context "when autocreating RemoveFromUserReviews command" do
+          it "Creates a RemoveFromUserReviews command that works with existing records to append" do
+            expect(SomeOrg::SomeDomain::RemoveFromUserReviews).to be < Foobara::Command
+
+            review1 = SomeOrg::SomeDomain::CreateReview.run!(rating: 1, thoughts: "t")
+            review2 = SomeOrg::SomeDomain::CreateReview.run!(rating: 2, thoughts: "t2")
+
+            user = SomeOrg::SomeDomain::CreateUser.run!(first_name: "f", last_name: "l", reviews: [review1, review2])
+
+            expect(user.reviews.size).to be(2)
+
+            outcome = SomeOrg::SomeDomain::RemoveFromUserReviews.run(user: user.id, element_to_remove: review1)
+
+            expect(outcome).to be_success
+            expect(outcome.result).to eq(review1)
+
+            SomeOrg::SomeDomain::User.transaction do
+              user = SomeOrg::SomeDomain::FindUser.run!(id: user.id)
+
+              expect(user.reviews.size).to be(1)
+
+              review = user.reviews.first
+
+              expect(review).to eq(review2)
+            end
+          end
+
+          context "when element is not in the collection" do
+            it "is not success" do
+              review1 = SomeOrg::SomeDomain::CreateReview.run!(rating: 1, thoughts: "t")
+              review2 = SomeOrg::SomeDomain::CreateReview.run!(rating: 2, thoughts: "t2")
+
+              user = SomeOrg::SomeDomain::CreateUser.run!(first_name: "f", last_name: "l", reviews: [review1])
+
+              outcome = SomeOrg::SomeDomain::RemoveFromUserReviews.run(user: user.id, element_to_remove: review2)
+
+              expect(outcome).to_not be_success
+              expect(outcome.errors_hash).to eq(
+                "runtime.element_not_in_collection" => {
+                  category: :runtime,
+                  context: {},
+                  is_fatal: true,
+                  key: "runtime.element_not_in_collection",
+                  message: "Element not in collection so can't remove it.",
+                  path: [],
+                  runtime_path: [],
+                  symbol: :element_not_in_collection
+                }
+              )
+            end
+          end
         end
       end
     end
