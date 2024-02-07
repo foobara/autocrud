@@ -331,30 +331,30 @@ module Foobara
         entity_class.associations.each_pair do |data_path, type|
           data_path = DataPath.parse(data_path)
           if data_path.simple_collection?
-            create_append_command(entity_class, data_path, type)
+            create_append_command(entity_class, data_path.path[0..-2], type)
           end
         end
       end
 
-      def create_append_command(entity_class, data_path, association_type)
-        start = data_path.path.size - 3
+      def create_append_command(entity_class, path_to_collection, association_type)
+        start = path_to_collection.size - 2
         start = 0 if start < 0
-        collection_name = data_path[start..start + 1]
+        collection_name = path_to_collection[start..start + 1]
         collection_name = collection_name.map { |part| Util.classify(part) }.join
 
         domain = entity_class.domain
         # TODO: group these by entity name?
         command_name = [*domain.scoped_full_path, "AppendTo#{entity_class.entity_name}#{collection_name}"].join("::")
 
-        entity_input_name = Util.underscore(entity_class.entity_name)
+        entity_input_name = Util.underscore_sym(entity_class.entity_name)
 
         Util.make_class(command_name, Foobara::Command) do
           define_method :entity_class do
             entity_class
           end
 
-          define_method :data_path do
-            data_path.path
+          define_method :path_to_collection do
+            path_to_collection
           end
 
           define_method :entity_input_name do
@@ -363,8 +363,12 @@ module Foobara
 
           # TODO: can't use attributes: :attributes but should be able to.
           # Allow a hash to create these these things?
-          inputs entity_input_name => entity_class,
-                 element_to_append: association_type.target_class
+          inputs type: :attributes,
+                 element_type_declarations: {
+                   entity_input_name => entity_class,
+                   element_to_append: association_type.target_class
+                 },
+                 required: [entity_input_name, :element_to_append]
 
           result association_type.target_class
 
@@ -378,15 +382,14 @@ module Foobara
             element_to_append
           end
 
-          attr_accessor :element_to_append, :new_collection
+          attr_accessor :new_collection
 
           def append_record_to_collection
-            collection_path = data_path[0..-2]
-            collection = DataPath.value_at(record, collection_path)
+            collection = DataPath.value_at(path_to_collection, record)
 
             self.new_collection = [*collection, element_to_append]
 
-            DataPath.set_value_at(record, new_collection, data_path)
+            DataPath.set_value_at(record, new_collection, path_to_collection)
           end
 
           def record

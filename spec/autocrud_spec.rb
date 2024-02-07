@@ -317,7 +317,7 @@ RSpec.describe Foobara::Autocrud do
         end
 
         context "when autocreating AppendToUserReviews command" do
-          it "Creates a AppendToUserReviews command that works with existing records to append", :focus do
+          it "Creates a AppendToUserReviews command that works with existing records to append" do
             expect(SomeOrg::SomeDomain::AppendToUserReviews).to be < Foobara::Command
 
             review = SomeOrg::SomeDomain::CreateReview.run!(rating: 1, thoughts: "t")
@@ -327,18 +327,22 @@ RSpec.describe Foobara::Autocrud do
 
             expect(user.reviews.size).to be(1)
 
-            outcome = SomeOrg::SomeDomain::AppendToUserReviews.run(user: user.id, review: new_review)
+            outcome = SomeOrg::SomeDomain::AppendToUserReviews.run(user: user.id, element_to_append: new_review)
 
             expect(outcome).to be_success
-            user = outcome.result
+            expect(outcome.result).to eq(new_review)
 
-            expect(user.reviews.size).to be(2)
+            SomeOrg::SomeDomain::User.transaction do
+              user = SomeOrg::SomeDomain::FindUser.run!(id: user.id)
 
-            first_review = user.reviews.first
-            last_review = user.reviews.last
+              expect(user.reviews.size).to be(2)
 
-            expect(first_review.rating).to be(1)
-            expect(last_review.rating).to be(2)
+              first_review = user.reviews.first
+              last_review = user.reviews.last
+
+              expect(first_review.rating).to be(1)
+              expect(last_review.rating).to be(2)
+            end
           end
         end
       end
