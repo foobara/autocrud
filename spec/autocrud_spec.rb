@@ -217,11 +217,11 @@ RSpec.describe Foobara::Autocrud do
         end
 
         context "when autocreating UpdateAggregate command" do
-          # TODO: add some associations to User or move test code from foobara to here.
           it "Creates a UpdateUserAggregate command" do
             expect(SomeOrg::SomeDomain::UpdateUserAggregate).to be < Foobara::Command
 
-            user = SomeOrg::SomeDomain::CreateUser.run!(first_name: "f", last_name: "l")
+            review = SomeOrg::SomeDomain::CreateReview.run!(rating: 1, thoughts: "t")
+            user = SomeOrg::SomeDomain::CreateUser.run!(first_name: "f", last_name: "l", reviews: [review])
 
             outcome = SomeOrg::SomeDomain::UpdateUserAggregate.run(first_name: "ff", id: user.id)
 
@@ -231,6 +231,50 @@ RSpec.describe Foobara::Autocrud do
             expect(user.first_name).to eq("ff")
             expect(user.last_name).to eq("l")
             expect(user.id).to be_a(Integer)
+          end
+        end
+
+        context "when autocreating FindUser command" do
+          it "Creates a FindUser command" do
+            expect(SomeOrg::SomeDomain::FindUser).to be < Foobara::Command
+
+            review = SomeOrg::SomeDomain::CreateReview.run!(rating: 1, thoughts: "t")
+            SomeOrg::SomeDomain::CreateUser.run!(first_name: "f", last_name: "l", reviews: [review])
+
+            outcome = SomeOrg::SomeDomain::FindUser.run(id: 1)
+
+            expect(outcome).to be_success
+            user = outcome.result
+
+            expect(user.first_name).to eq("f")
+            expect(user.last_name).to eq("l")
+            expect(user.id).to be_a(Integer)
+            review = user.reviews.first
+
+            review = SomeOrg::SomeDomain::FindReview.run!(id: review.id)
+
+            expect(review.rating).to be(1)
+            expect(review.thoughts).to eq("t")
+          end
+        end
+
+        context "when autocreating AppendToUserReviews command" do
+          it "Creates a AppendToUserReviews command", skip: "todo" do
+            # expect(SomeOrg::SomeDomain::AppendToUserReviews).to be < Foobara::Command
+            #
+            # review = SomeOrg::SomeDomain::CreateReview.run!(rating: 1, thoughts: "t")
+            # user = SomeOrg::SomeDomain::CreateUser.run!(first_name: "f", last_name: "l", reviews: [review])
+            #
+            # new_review = SomeOrg::SomeDomain::CreateReview.run!(rating: 2, thoughts: "t2")
+            #
+            # outcome = SomeOrg::SomeDomain::AppendToUserReviews.run(user: user.id, review: new_review)
+            #
+            # expect(outcome).to be_success
+            # user = outcome.result
+            #
+            # expect(user.first_name).to eq("ff")
+            # expect(user.last_name).to eq("l")
+            # expect(user.id).to be_a(Integer)
           end
         end
       end

@@ -120,6 +120,7 @@ module Foobara
         create_update_atom_command(entity_class)
         create_update_aggregate_command(entity_class)
         create_hard_delete_command(entity_class)
+        create_find_command(entity_class)
       end
 
       def create_update_atom_command(entity_class)
@@ -251,6 +252,39 @@ module Foobara
           end
         end
       end
+
+      def create_find_command(entity_class)
+        domain = entity_class.domain
+        command_name = [*domain.scoped_full_path, "Find#{entity_class.entity_name}"].join("::")
+
+        Util.make_class(command_name, Foobara::Command) do
+          define_method :entity_class do
+            entity_class
+          end
+
+          # TODO: should be able to just use the primary_key_type as sugar for the declartion_data
+          inputs entity_class.primary_key_attribute => entity_class.primary_key_type.declaration_data
+          result entity_class
+
+          def execute
+            load_record
+
+            record
+          end
+
+          attr_accessor :record
+
+          def load_record
+            self.record = entity_class.load(primary_key)
+          end
+
+          def primary_key
+            inputs[entity_class.primary_key_attribute]
+          end
+        end
+      end
+
+      private
 
       def find_or_create_domain(domain)
         Domain.to_domain(domain)
