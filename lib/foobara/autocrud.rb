@@ -262,21 +262,32 @@ module Foobara
             entity_class
           end
 
-          inputs entity_class.primary_key_attribute => entity_class
+          # TODO: should be able to just use the type for convenience
+          inputs entity_class.primary_key_attribute => entity_class.primary_key_type.declaration_data
           result entity_class
 
-          load_all
+          possible_error Entity::NotFoundError
 
           def execute
+            load_record
+
             record
           end
 
-          def record
-            inputs[primary_key_attribute]
+          attr_accessor :record
+
+          def load_record
+            self.record = entity_class.load(record_id)
+          rescue Entity::NotFoundError => e
+            add_runtime_error e
           end
 
           def primary_key_attribute
             entity_class.primary_key_attribute
+          end
+
+          def record_id
+            inputs[primary_key_attribute]
           end
         end
       end

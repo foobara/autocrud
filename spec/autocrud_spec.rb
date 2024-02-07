@@ -263,17 +263,15 @@ RSpec.describe Foobara::Autocrud do
               expect(outcome).to_not be_success
 
               expect(outcome.errors_hash).to eq(
-                "runtime.id_not_found" => {
+                "runtime.not_found" => {
                   category: :runtime,
-                  context: {
-                    data_path: "id", entity_class: "SomeOrg::SomeDomain::User", primary_key: 1
-                  },
+                  context: { data_path: "", entity_class: "SomeOrg::SomeDomain::User", primary_key: 1 },
                   is_fatal: true,
-                  key: "runtime.id_not_found",
+                  key: "runtime.not_found",
                   message: "Could not find SomeOrg::SomeDomain::User with id of 1",
                   path: [],
                   runtime_path: [],
-                  symbol: :id_not_found
+                  symbol: :not_found
                 }
               )
             end
