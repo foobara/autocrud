@@ -262,24 +262,21 @@ module Foobara
             entity_class
           end
 
-          # TODO: should be able to just use the primary_key_type as sugar for the declartion_data
-          inputs entity_class.primary_key_attribute => entity_class.primary_key_type.declaration_data
+          inputs entity_class.primary_key_attribute => entity_class
           result entity_class
 
-          def execute
-            load_record
+          load_all
 
+          def execute
             record
           end
 
-          attr_accessor :record
-
-          def load_record
-            self.record = entity_class.load(primary_key)
+          def record
+            inputs[primary_key_attribute]
           end
 
-          def primary_key
-            inputs[entity_class.primary_key_attribute]
+          def primary_key_attribute
+            entity_class.primary_key_attribute
           end
         end
       end

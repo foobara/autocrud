@@ -256,6 +256,28 @@ RSpec.describe Foobara::Autocrud do
             expect(review.rating).to be(1)
             expect(review.thoughts).to eq("t")
           end
+
+          context "when user doesn't exist" do
+            it "is not success" do
+              outcome = SomeOrg::SomeDomain::FindUser.run(id: 1)
+              expect(outcome).to_not be_success
+
+              expect(outcome.errors_hash).to eq(
+                "runtime.id_not_found" => {
+                  category: :runtime,
+                  context: {
+                    data_path: "id", entity_class: "SomeOrg::SomeDomain::User", primary_key: 1
+                  },
+                  is_fatal: true,
+                  key: "runtime.id_not_found",
+                  message: "Could not find SomeOrg::SomeDomain::User with id of 1",
+                  path: [],
+                  runtime_path: [],
+                  symbol: :id_not_found
+                }
+              )
+            end
+          end
         end
 
         context "when autocreating AppendToUserReviews command" do
