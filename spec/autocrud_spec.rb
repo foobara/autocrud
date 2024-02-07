@@ -119,8 +119,29 @@ RSpec.describe Foobara::Autocrud do
       end
 
       context "when autocreating crud commands" do
+        let(:user_class) do
+          review = review_class
+
+          described_class.create_entity(:User, domain:) do
+            id :integer
+            first_name :string
+            last_name :string
+            reviews [review], default: []
+          end
+        end
+
+        let(:review_class) do
+          described_class.create_entity(:Review, domain: "SomeOrg::SomeDomain") do
+            id :integer
+            rating :integer, :required
+            thoughts :string
+          end
+        end
+
+        let(:domain) { "SomeOrg::SomeDomain" }
+
         before do
-          described_class.create_type(type_declaration:)
+          user_class
         end
 
         context "when autocreating Create command" do
@@ -140,18 +161,7 @@ RSpec.describe Foobara::Autocrud do
           end
 
           context "without a domain" do
-            let(:type_declaration) do
-              {
-                type: :entity,
-                attributes_declaration: {
-                  first_name: :string,
-                  last_name: :string,
-                  id: :integer
-                },
-                primary_key: :id,
-                name: "User"
-              }
-            end
+            let(:domain) { nil }
 
             it "Creates a CreateUser command" do
               expect(CreateUser).to be < Foobara::Command
@@ -162,8 +172,8 @@ RSpec.describe Foobara::Autocrud do
 
               user = outcome.result
 
-              # TODO: just put this in the global namespace if not using domains.
-              expect(user).to be_a(Foobara::Entity::User)
+              # TODO: just put this in the global namespace if not using domains?
+              expect(user).to be_a(Foobara::GlobalDomain::User)
               expect(user.first_name).to eq("f")
               expect(user.last_name).to eq("l")
               expect(user.id).to be_a(Integer)
