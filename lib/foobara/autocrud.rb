@@ -121,6 +121,7 @@ module Foobara
         create_update_aggregate_command(entity_class)
         create_hard_delete_command(entity_class)
         create_find_command(entity_class)
+        create_find_by_command(entity_class)
       end
 
       def create_update_atom_command(entity_class)
@@ -288,6 +289,41 @@ module Foobara
 
           def record_id
             inputs[primary_key_attribute]
+          end
+        end
+      end
+
+      def create_find_by_command(entity_class)
+        domain = entity_class.domain
+        command_name = [*domain.scoped_full_path, "Find#{entity_class.entity_name}By"].join("::")
+
+        # we want the attributes with no defaults or required entries.
+
+        Util.make_class(command_name, Foobara::Command) do
+          define_method :entity_class do
+            entity_class
+          end
+
+          # TODO: can't use attributes: :attributes but should be able to.
+          inputs Command::EntityHelpers.type_declaration_for_find_by(entity_class)
+          result entity_class
+
+          possible_error Entity::NotFoundError
+
+          def execute
+            load_record
+
+            record
+          end
+
+          attr_accessor :record
+
+          def load_record
+            self.record = entity_class.find_by(inputs)
+
+            unless record
+              add_runtime_error Entity::NotFoundError.new(inputs, entity_class:)
+            end
           end
         end
       end

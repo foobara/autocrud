@@ -239,9 +239,9 @@ RSpec.describe Foobara::Autocrud do
             expect(SomeOrg::SomeDomain::FindUser).to be < Foobara::Command
 
             review = SomeOrg::SomeDomain::CreateReview.run!(rating: 1, thoughts: "t")
-            SomeOrg::SomeDomain::CreateUser.run!(first_name: "f", last_name: "l", reviews: [review])
+            user = SomeOrg::SomeDomain::CreateUser.run!(first_name: "f", last_name: "l", reviews: [review])
 
-            outcome = SomeOrg::SomeDomain::FindUser.run(id: 1)
+            outcome = SomeOrg::SomeDomain::FindUser.run(id: user.id)
 
             expect(outcome).to be_success
             user = outcome.result
@@ -265,16 +265,54 @@ RSpec.describe Foobara::Autocrud do
               expect(outcome.errors_hash).to eq(
                 "runtime.not_found" => {
                   category: :runtime,
-                  context: { data_path: "", entity_class: "SomeOrg::SomeDomain::User", primary_key: 1 },
+                  context: { criteria: 1, data_path: "", entity_class: "SomeOrg::SomeDomain::User" },
                   is_fatal: true,
                   key: "runtime.not_found",
-                  message: "Could not find SomeOrg::SomeDomain::User with id of 1",
+                  message: "Could not find SomeOrg::SomeDomain::User for 1",
                   path: [],
                   runtime_path: [],
                   symbol: :not_found
                 }
               )
             end
+          end
+        end
+
+        context "when autocreating FindUserBy command" do
+          it "Creates a FindUserBy command" do
+            expect(SomeOrg::SomeDomain::FindUserBy).to be < Foobara::Command
+
+            review = SomeOrg::SomeDomain::CreateReview.run!(rating: 1, thoughts: "t")
+            user = SomeOrg::SomeDomain::CreateUser.run!(first_name: "f", last_name: "l", reviews: [review])
+            user_id = user.id
+
+            user = SomeOrg::SomeDomain::FindUserBy.run!(id: user_id)
+            expect(user.id).to be(user_id)
+
+            user = SomeOrg::SomeDomain::FindUserBy.run!(first_name: "f")
+            expect(user.id).to be(user_id)
+
+            user = SomeOrg::SomeDomain::FindUserBy.run!(first_name: "f", last_name: "l")
+            expect(user.id).to be(user_id)
+
+            outcome = SomeOrg::SomeDomain::FindUserBy.run(first_name: "bad first name")
+
+            expect(outcome).to_not be_success
+
+            expect(outcome.errors_hash).to eq(
+              "runtime.not_found" => {
+                category: :runtime,
+                context: { criteria: { first_name: "bad first name" },
+                           data_path: "",
+                           entity_class: "SomeOrg::SomeDomain::User" },
+                is_fatal: true,
+                key: "runtime.not_found",
+                message: "Could not find SomeOrg::SomeDomain::User for {:first_name=>\"bad first name\"}",
+                path: [],
+                runtime_path: [],
+                symbol: :not_found
+              }
+            )
           end
         end
 
