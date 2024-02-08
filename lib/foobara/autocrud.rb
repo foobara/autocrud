@@ -465,8 +465,6 @@ module Foobara
 
           to_load entity_input_name
 
-          possible_error self::ElementNotInCollectionError
-
           def execute
             remove_record_from_collection
 
