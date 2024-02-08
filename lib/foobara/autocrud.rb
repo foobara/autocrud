@@ -265,8 +265,7 @@ module Foobara
             entity_class
           end
 
-          # TODO: should be able to just use the type for convenience
-          inputs entity_class.primary_key_attribute => entity_class.primary_key_type.declaration_data
+          inputs entity_class.primary_key_attribute => entity_class.primary_key_type
           result entity_class
 
           possible_error Entity::NotFoundError
