@@ -122,6 +122,7 @@ module Foobara
         create_hard_delete_command(entity_class)
         create_find_command(entity_class)
         create_find_by_command(entity_class)
+        create_query_command(entity_class)
         create_append_commands(entity_class)
       end
 
@@ -323,6 +324,33 @@ module Foobara
             unless record
               add_runtime_error Entity::NotFoundError.new(inputs, entity_class:)
             end
+          end
+        end
+      end
+
+      def create_query_command(entity_class)
+        domain = entity_class.domain
+        command_name = [*domain.scoped_full_path, "Query#{entity_class.entity_name}"].join("::")
+
+        Util.make_class(command_name, Foobara::Command) do
+          define_method :entity_class do
+            entity_class
+          end
+
+          # TODO: can't use attributes: :attributes but should be able to.
+          inputs Command::EntityHelpers.type_declaration_for_find_by(entity_class)
+          result [entity_class]
+
+          def execute
+            run_query
+
+            records
+          end
+
+          attr_accessor :records
+
+          def run_query
+            self.records = entity_class.find_many_by(inputs)
           end
         end
       end

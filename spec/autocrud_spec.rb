@@ -316,6 +316,19 @@ RSpec.describe Foobara::Autocrud do
           end
         end
 
+        context "when autocreating QueryUser command" do
+          it "Creates a QueryUser command" do
+            expect(SomeOrg::SomeDomain::QueryUser).to be < Foobara::Command
+
+            user1 = SomeOrg::SomeDomain::CreateUser.run!(first_name: "same_first", last_name: "different")
+            user2 = SomeOrg::SomeDomain::CreateUser.run!(first_name: "same_first", last_name: "last")
+
+            users = SomeOrg::SomeDomain::QueryUser.run!(first_name: "same_first")
+
+            expect(users).to contain_exactly(user1, user2)
+          end
+        end
+
         context "when autocreating AppendToUserReviews command" do
           it "Creates a AppendToUserReviews command that works with existing records to append" do
             expect(SomeOrg::SomeDomain::AppendToUserReviews).to be < Foobara::Command
