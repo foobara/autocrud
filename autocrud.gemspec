@@ -1,7 +1,7 @@
 require_relative "lib/foobara/autocrud/version"
 
 Gem::Specification.new do |spec|
-  spec.name = "autocrud"
+  spec.name = "foobara-autocrud"
   spec.version = Foobara::Autocrud::Version::VERSION
   spec.authors = ["Miles Georgi"]
   spec.email = ["azimux@gmail.com"]
