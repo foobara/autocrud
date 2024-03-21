@@ -118,6 +118,64 @@ RSpec.describe Foobara::Autocrud do
         end
       end
 
+      context "when autocreated crud commands without domain argument" do
+        let(:role_type_declaration) do
+          {
+            type: :entity,
+            name: "Role",
+            model_module: "SomeOrg::SomeDomain",
+            attributes_declaration: {
+              id: :integer,
+              name: { type: :string, required: true }
+            },
+            primary_key: :id
+          }
+        end
+
+        let(:user_type_declaration) do
+          {
+            type: :entity,
+            name: "User",
+            attributes_declaration: {
+              id: :integer,
+              name: :string,
+              email: :email,
+              role: role_class
+            },
+            primary_key: :id,
+            model_module: "SomeOrg::SomeDomain"
+          }
+        end
+
+        let(:user_class) do
+          described_class.create_type(user_type_declaration)
+        end
+
+        let(:role_class) do
+          described_class.create_type(role_type_declaration)
+        end
+
+        let(:organization) do
+          stub_module("SomeOrg") { foobara_organization! }
+        end
+
+        let(:domain) do
+          stub_module("SomeOrg::SomeDomain") { foobara_domain! }
+        end
+
+        before do
+          organization
+          domain
+          role_class
+          user_class
+        end
+
+        it "creates commands in the proper domain" do
+          expect(SomeOrg::SomeDomain::CreateUser).to be < Foobara::Command
+          expect(SomeOrg::SomeDomain::CreateRole).to be < Foobara::Command
+        end
+      end
+
       context "when autocreating crud commands" do
         let(:user_class) do
           review = review_class
