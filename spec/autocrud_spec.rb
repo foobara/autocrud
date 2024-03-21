@@ -43,7 +43,7 @@ RSpec.describe Foobara::Autocrud do
       let(:domain) { "SomeOrg::SomeDomain" }
 
       it "creates and registers the type and creates a persisted type record" do
-        described_class.create_type(type_declaration:, type_symbol:, domain:)
+        described_class.create_type(type_declaration, type_symbol:, domain:)
 
         persisted_type = Foobara::Autocrud::PersistedType.transaction do
           Foobara::Autocrud::PersistedType.all.to_a
@@ -79,7 +79,7 @@ RSpec.describe Foobara::Autocrud do
 
         it "creates a persisted type record and an entity class" do
           expect {
-            described_class.create_type(type_declaration:)
+            described_class.create_type(type_declaration)
           }.to raise_error(Foobara::Autocrud::NoBaseSetError)
         end
       end
@@ -87,7 +87,7 @@ RSpec.describe Foobara::Autocrud do
       context "when base set" do
         it "creates a persisted type record and an entity class" do
           Foobara::Autocrud::PersistedType.transaction do
-            described_class.create_type(type_declaration:)
+            described_class.create_type(type_declaration)
           end
           expect(SomeOrg::SomeDomain::User).to be < Foobara::Entity
         end
@@ -110,7 +110,7 @@ RSpec.describe Foobara::Autocrud do
 
           it "creates a persisted type record and an entity class" do
             Foobara::Autocrud::PersistedType.transaction do
-              described_class.create_type(type_declaration:, domain:)
+              described_class.create_type(type_declaration, domain:)
             end
 
             expect(SomeOrg::SomeDomain::User).to be < Foobara::Entity

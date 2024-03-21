@@ -9,7 +9,7 @@ module Foobara
     class << self
       attr_accessor :base
 
-      def create_type(type_declaration:, type_symbol: nil, domain: nil)
+      def create_type(type_declaration, type_symbol: nil, domain: nil)
         raise NoBaseSetError unless base
 
         type = load_type(type_declaration:, type_symbol:, domain:)
@@ -34,15 +34,13 @@ module Foobara
 
         domain = find_or_create_domain(domain)
 
-        create_type(
-          type_declaration: {
-            type: :entity,
-            attributes_declaration: attributes_type_declaration,
-            name:,
-            primary_key: attributes_type_declaration[:element_type_declarations].keys.first,
-            model_module: domain
-          }
-        ).target_class
+        create_type({
+                      type: :entity,
+                      attributes_declaration: attributes_type_declaration,
+                      name:,
+                      primary_key: attributes_type_declaration[:element_type_declarations].keys.first,
+                      model_module: domain
+                    }).target_class
       end
 
       def load_type(type_declaration:, type_symbol: nil, domain: GlobalDomain)
