@@ -32,13 +32,18 @@ module Foobara
 
         domain = find_or_create_domain(domain)
 
-        create_type({
-                      type: :entity,
-                      attributes_declaration: attributes_type_declaration,
-                      name:,
-                      primary_key: attributes_type_declaration[:element_type_declarations].keys.first,
-                      model_module: domain
-                    }).target_class
+        inputs = {
+          type: :entity,
+          attributes_declaration: attributes_type_declaration,
+          name:,
+          primary_key: attributes_type_declaration[:element_type_declarations].keys.first
+        }
+
+        if domain && domain != GlobalDomain
+          inputs[:model_module] = domain
+        end
+
+        create_type(inputs).target_class
       end
 
       def load_type(type_declaration:, type_symbol: nil, domain: GlobalDomain)
@@ -53,9 +58,11 @@ module Foobara
             # :nocov:
           end
         else
+          # :nocov:
           type.type_symbol = type_symbol
           type.foobara_parent_namespace ||= domain
           type.foobara_parent_namespace.foobara_register(type)
+          # :nocov:
         end
 
         if type.extends_symbol?(:entity)

@@ -1,5 +1,6 @@
 module Foobara
   module Autocrud
+    # TODO: delete this error once everything is implemented as commands
     class NoBaseSetError < StandardError
       def initialize
         super(
