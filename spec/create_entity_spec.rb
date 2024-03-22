@@ -55,20 +55,20 @@ RSpec.describe Foobara::Autocrud::CreateType do
         let(:user_class) do
           review = review_class
 
-          Foobara::Autocrud.create_entity(:User, domain:) do
+          Foobara::Autocrud::CreateEntity.run!(name: :User, domain:, attributes_declaration: proc {
             id :integer
             first_name :string
             last_name :string
             reviews [review], default: []
-          end
+          })
         end
 
         let(:review_class) do
-          Foobara::Autocrud.create_entity(:Review, domain:) do
-            id :integer
-            rating :integer, :required
-            thoughts :string
-          end
+          Foobara::Autocrud::CreateEntity.run!(name: :Review, domain:, attributes_declaration: {
+                                                 id: :integer,
+                                                 rating: { type: :integer, required: true },
+                                                 thoughts: :string
+                                               })
         end
 
         let(:domain) { "SomeOrg::SomeDomain" }

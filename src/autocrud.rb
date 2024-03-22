@@ -7,26 +7,6 @@ module Foobara
     class << self
       attr_accessor :base
 
-      def create_entity(name, domain: nil, &)
-        attributes_type_declaration = Foobara::TypeDeclarations::Dsl::Attributes.to_declaration(&)
-
-        domain = find_or_create_domain(domain)
-
-        type_declaration = {
-          type: :entity,
-          attributes_declaration: attributes_type_declaration,
-          name:,
-          primary_key: attributes_type_declaration[:element_type_declarations].keys.first
-        }
-
-        if domain && domain != GlobalDomain
-          type_declaration[:model_module] = domain
-        end
-
-        type = CreateType.run!(type_declaration:)
-        type.target_class
-      end
-
       def load_type(type_declaration:, type_symbol: nil, domain: GlobalDomain)
         domain = find_or_create_domain(domain)
 
