@@ -7,30 +7,6 @@ module Foobara
     class << self
       attr_accessor :base
 
-      def load_type(type_declaration:, type_symbol: nil, domain: GlobalDomain)
-        domain = find_or_create_domain(domain)
-
-        type = domain.foobara_type_from_declaration(type_declaration)
-
-        if type.registered?
-          if type_symbol && type_symbol.to_sym != type.type_symbol
-            # :nocov:
-            raise "Type symbol mismatch: #{type_symbol} versus #{type.type_symbol}"
-            # :nocov:
-          end
-        else
-          type.type_symbol = type_symbol
-          type.foobara_parent_namespace ||= domain
-          type.foobara_parent_namespace.foobara_register(type)
-        end
-
-        if type.extends_symbol?(:entity)
-          create_autocrud_commands(type.target_class)
-        end
-
-        type
-      end
-
       def install!
         raise NoBaseSetError unless base
 
@@ -38,7 +14,7 @@ module Foobara
 
         PersistedType.transaction do
           PersistedType.all do |persisted_type|
-            load_type(
+            BuildType.run!(
               type_declaration: persisted_type.type_declaration,
               type_symbol: persisted_type.type_symbol,
               domain: persisted_type.full_domain_name
@@ -47,6 +23,7 @@ module Foobara
         end
       end
 
+      # TODO: refactor this into a collection of commands that we can pick-and-choose from
       def create_autocrud_commands(entity_class)
         # TODO: autocrud commands!
         # commands:
@@ -454,20 +431,6 @@ module Foobara
           def record
             inputs[entity_input_name]
           end
-        end
-      end
-
-      private
-
-      def find_or_create_domain(domain)
-        Domain.to_domain(domain)
-      rescue Domain::NoSuchDomain => e
-        if domain.is_a?(::String) || domain.is_a?(::Symbol)
-          Domain.create(domain)
-        else
-          # :nocov:
-          raise e
-          # :nocov:
         end
       end
     end
