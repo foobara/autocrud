@@ -1,4 +1,4 @@
-require_relative "lib/foobara/autocrud/version"
+require_relative "src/foobara/autocrud/version"
 
 Gem::Specification.new do |spec|
   spec.name = "foobara-autocrud"

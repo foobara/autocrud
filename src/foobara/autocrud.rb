@@ -4,8 +4,6 @@ module Foobara
   module Autocrud
     foobara_domain!
 
-    Util.require_directory(__dir__)
-
     class << self
       attr_accessor :base
 
