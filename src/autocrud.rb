@@ -7,32 +7,12 @@ module Foobara
     class << self
       attr_accessor :base
 
-      def create_type(type_declaration, type_symbol: nil, domain: nil)
-        raise NoBaseSetError unless base
-
-        type = load_type(type_declaration:, type_symbol:, domain:)
-
-        domain = Domain.to_domain(type)
-
-        PersistedType.transaction(mode: :use_existing) do
-          PersistedType.create(
-            Util.remove_blank(
-              type_declaration: type.declaration_data,
-              type_symbol: type.type_symbol,
-              full_domain_name: domain.scoped_full_name
-            )
-          )
-        end
-
-        type
-      end
-
       def create_entity(name, domain: nil, &)
         attributes_type_declaration = Foobara::TypeDeclarations::Dsl::Attributes.to_declaration(&)
 
         domain = find_or_create_domain(domain)
 
-        inputs = {
+        type_declaration = {
           type: :entity,
           attributes_declaration: attributes_type_declaration,
           name:,
@@ -40,10 +20,11 @@ module Foobara
         }
 
         if domain && domain != GlobalDomain
-          inputs[:model_module] = domain
+          type_declaration[:model_module] = domain
         end
 
-        create_type(inputs).target_class
+        type = CreateType.run!(type_declaration:)
+        type.target_class
       end
 
       def load_type(type_declaration:, type_symbol: nil, domain: GlobalDomain)
