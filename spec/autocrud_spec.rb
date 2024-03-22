@@ -33,27 +33,54 @@ RSpec.describe Foobara::Autocrud do
     context "when a type is persisted" do
       before do
         Foobara::Autocrud::PersistedType.transaction do
-          Foobara::Autocrud::PersistedType.create(
-            type_declaration: {
-              type: :entity,
-              attributes_declaration: {
-                first_name: :string,
-                last_name: :string,
-                id: :integer
-              },
-              primary_key: :id,
-              name: "Person",
-              model_module: "SomeOrg::SomeDomain"
-            },
-            type_symbol: "Person",
-            full_domain_name: "SomeOrg::SomeDomain"
-          )
+          Foobara::Autocrud::PersistedType.create(persisted_type_attributes)
         end
+      end
+
+      let(:persisted_type_attributes) do
+        {
+          type_declaration: {
+            type: :entity,
+            attributes_declaration: {
+              first_name: :string,
+              last_name: :string,
+              id: :integer
+            },
+            primary_key: :id,
+            name: "Person",
+            model_module: "SomeOrg::SomeDomain"
+          },
+          type_symbol: "Person",
+          full_domain_name: "SomeOrg::SomeDomain"
+        }
       end
 
       it "loads the type" do
         described_class.install!
         expect(SomeOrg::SomeDomain::Person).to be < Foobara::Entity
+      end
+
+      context "when it's not an entity or model" do
+        let(:persisted_type_attributes) do
+          {
+            type_declaration: {
+              type: :string,
+              downcase: true
+            },
+            type_symbol: :always_downcase,
+            full_domain_name: "SomeOrg::SomeDomain"
+          }
+        end
+
+        it "loads and registers the type" do
+          described_class.install!
+
+          type = Foobara.foobara_lookup_type("SomeOrg::SomeDomain::always_downcase")
+
+          expect(type).to be_a(Foobara::Types::Type)
+
+          expect(type.process_value!("FooBar")).to eq("foobar")
+        end
       end
     end
 

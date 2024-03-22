@@ -19,11 +19,9 @@ module Foobara
             # :nocov:
           end
         else
-          # :nocov:
           type.type_symbol = type_symbol
           type.foobara_parent_namespace ||= domain
           type.foobara_parent_namespace.foobara_register(type)
-          # :nocov:
         end
 
         if type.extends_symbol?(:entity)
