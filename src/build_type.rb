@@ -1,8 +1,6 @@
 module Foobara
   module Autocrud
-    class CreateType < AutocrudCommand
-      depends_on_entity PersistedType
-
+    class BuildType < AutocrudCommand
       inputs do
         type_declaration :associative_array, :required
         domain :duck
@@ -14,7 +12,6 @@ module Foobara
         build_type
         register_type_if_needed
         create_autocrud_commands_if_needed
-        persist_type
 
         type
       end
@@ -58,16 +55,6 @@ module Foobara
         if type.extends_symbol?(:entity)
           Autocrud.create_autocrud_commands(type.target_class)
         end
-      end
-
-      def persist_type
-        PersistedType.create(
-          Util.remove_blank(
-            type_declaration: type.declaration_data,
-            type_symbol: type.type_symbol,
-            full_domain_name: domain.scoped_full_name
-          )
-        )
       end
     end
   end
