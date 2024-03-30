@@ -1,6 +1,6 @@
 GIT
   remote: foobara
-  revision: 6815a111940fd393e6aa76f69622f5701cf38a4f
+  revision: fa7ab21569e002ed468bca4c3fe7b14a22ed9808
   branch: main
   specs:
     foobara (0.0.1)
@@ -21,7 +21,7 @@ GIT
 
 GIT
   remote: https://github.com/foobara/util.git
-  revision: 7580a2d7530a6449238b0b1315f27cfee3ed6983
+  revision: ebf430ec00a389ec11e7f8e233131b1b36a1b6f1
   specs:
     foobara-util (0.1.0)
 
@@ -117,10 +117,13 @@ GEM
       rubocop (~> 1.41)
     rubocop-rake (0.6.0)
       rubocop (~> 1.0)
-    rubocop-rspec (2.27.1)
+    rubocop-rspec (2.28.0)
       rubocop (~> 1.40)
       rubocop-capybara (~> 2.17)
       rubocop-factory_bot (~> 2.22)
+      rubocop-rspec_rails (~> 2.28)
+    rubocop-rspec_rails (2.28.1)
+      rubocop (~> 1.40)
     ruby-progressbar (1.13.0)
     shellany (0.0.1)
     simplecov (0.22.0)
