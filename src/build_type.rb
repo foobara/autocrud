@@ -52,7 +52,7 @@ module Foobara
       end
 
       def create_autocrud_commands_if_needed
-        if type.extends?(:entity)
+        if type.extends?(BuiltinTypes[:entity])
           Autocrud.create_autocrud_commands(type.target_class)
         end
       end
