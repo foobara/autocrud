@@ -18,7 +18,6 @@ RSpec.describe Foobara::Autocrud::CreateType do
       HardDeleteUser
       UpdateUserAggregate
       UpdateUserAtom
-      CreateUser
       QueryReview
       FindReviewBy
       FindReview
@@ -105,8 +104,7 @@ RSpec.describe Foobara::Autocrud::CreateType do
 
               user = outcome.result
 
-              # TODO: just put this in the global namespace if not using domains?
-              expect(user).to be_a(Foobara::Entity::User)
+              expect(user).to be_a(User)
               expect(user.first_name).to eq("f")
               expect(user.last_name).to eq("l")
               expect(user.id).to be_a(Integer)

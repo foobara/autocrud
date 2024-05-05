@@ -1,11 +1,14 @@
 module Foobara
   module Autocrud
     class BuildType < AutocrudCommand
+      # TODO: maybe add an input for controlling if/which commands are created?
       inputs do
         type_declaration :associative_array, :required
         domain :duck
         type_symbol :symbol, :allow_nil
       end
+
+      depends_on CreateCommands
 
       def execute
         determine_domain
@@ -53,7 +56,7 @@ module Foobara
 
       def create_autocrud_commands_if_needed
         if type.extends?(BuiltinTypes[:entity])
-          Autocrud.create_autocrud_commands(type.target_class)
+          run_subcommand!(CreateCommands, entity_class: type.target_class)
         end
       end
     end
