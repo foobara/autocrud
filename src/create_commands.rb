@@ -40,7 +40,7 @@ module Foobara
         find_by
         query
         append
-      ]
+      ].freeze
 
       inputs do
         # TODO: give a way to specify union types? We would like an array of one_of: or one_of: or :all here.
@@ -87,6 +87,7 @@ module Foobara
                                 end
       end
 
+      # rubocop:disable Lint/NestedMethodDefinition
       def create_update_atom_command
         entity_class = self.entity_class
         domain = entity_class.domain
@@ -468,6 +469,7 @@ module Foobara
           end
         end
       end
+      # rubocop:enable Lint/NestedMethodDefinition
     end
   end
 end
