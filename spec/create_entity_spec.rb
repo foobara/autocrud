@@ -13,12 +13,14 @@ RSpec.describe Foobara::Autocrud::CreateType do
       RemoveFromUserReviews
       AppendToUserReviews
       QueryUser
+      QueryAllUser
       FindUserBy
       FindUser
       HardDeleteUser
       UpdateUserAggregate
       UpdateUserAtom
       QueryReview
+      QueryAllReview
       FindReviewBy
       FindReview
       HardDeleteReview
@@ -50,7 +52,7 @@ RSpec.describe Foobara::Autocrud::CreateType do
 
   describe "#run" do
     context "when creating an entity" do
-      context "when autocreating crud commands" do
+      context "when auto-creating crud commands" do
         let(:user_class) do
           review = review_class
 
@@ -76,7 +78,7 @@ RSpec.describe Foobara::Autocrud::CreateType do
           user_class
         end
 
-        context "when autocreating Create command" do
+        context "when auto-creating Create command" do
           it "creates a CreateUser command" do
             expect(SomeOrg::SomeDomain::CreateUser).to be < Foobara::Command
 
@@ -112,7 +114,7 @@ RSpec.describe Foobara::Autocrud::CreateType do
           end
         end
 
-        context "when autocreating HardDelete command" do
+        context "when auto-creating HardDelete command" do
           it "Creates a HardDeleteUser command" do
             expect(SomeOrg::SomeDomain::HardDeleteUser).to be < Foobara::Command
 
@@ -130,7 +132,7 @@ RSpec.describe Foobara::Autocrud::CreateType do
           end
         end
 
-        context "when autocreating UpdateAtom command" do
+        context "when auto-creating UpdateAtom command" do
           it "Creates a UpdateUserAtom command" do
             expect(SomeOrg::SomeDomain::UpdateUserAtom).to be < Foobara::Command
 
@@ -147,7 +149,7 @@ RSpec.describe Foobara::Autocrud::CreateType do
           end
         end
 
-        context "when autocreating UpdateAggregate command" do
+        context "when auto-creating UpdateAggregate command" do
           it "Creates a UpdateUserAggregate command" do
             expect(SomeOrg::SomeDomain::UpdateUserAggregate).to be < Foobara::Command
 
@@ -165,7 +167,7 @@ RSpec.describe Foobara::Autocrud::CreateType do
           end
         end
 
-        context "when autocreating FindUser command" do
+        context "when auto-creating FindUser command" do
           it "Creates a FindUser command" do
             expect(SomeOrg::SomeDomain::FindUser).to be < Foobara::Command
 
@@ -210,7 +212,7 @@ RSpec.describe Foobara::Autocrud::CreateType do
           end
         end
 
-        context "when autocreating FindUserBy command" do
+        context "when auto-creating FindUserBy command" do
           it "Creates a FindUserBy command" do
             expect(SomeOrg::SomeDomain::FindUserBy).to be < Foobara::Command
 
@@ -248,7 +250,7 @@ RSpec.describe Foobara::Autocrud::CreateType do
           end
         end
 
-        context "when autocreating QueryUser command" do
+        context "when auto-creating QueryUser command" do
           it "Creates a QueryUser command" do
             expect(SomeOrg::SomeDomain::QueryUser).to be < Foobara::Command
 
@@ -261,7 +263,20 @@ RSpec.describe Foobara::Autocrud::CreateType do
           end
         end
 
-        context "when autocreating AppendToUserReviews command" do
+        context "when auto-creating QueryAllUser command" do
+          it "Creates a QueryAllUser command" do
+            expect(SomeOrg::SomeDomain::QueryAllUser).to be < Foobara::Command
+
+            user1 = SomeOrg::SomeDomain::CreateUser.run!(first_name: "same_first", last_name: "different")
+            user2 = SomeOrg::SomeDomain::CreateUser.run!(first_name: "same_first", last_name: "last")
+
+            users = SomeOrg::SomeDomain::QueryAllUser.run!
+
+            expect(users).to contain_exactly(user1, user2)
+          end
+        end
+
+        context "when auto-creating AppendToUserReviews command" do
           it "Creates a AppendToUserReviews command that works with existing records to append" do
             expect(SomeOrg::SomeDomain::AppendToUserReviews).to be < Foobara::Command
 
@@ -320,7 +335,7 @@ RSpec.describe Foobara::Autocrud::CreateType do
           end
         end
 
-        context "when autocreating RemoveFromUserReviews command" do
+        context "when auto-creating RemoveFromUserReviews command" do
           it "Creates a RemoveFromUserReviews command that works with existing records to append" do
             expect(SomeOrg::SomeDomain::RemoveFromUserReviews).to be < Foobara::Command
 

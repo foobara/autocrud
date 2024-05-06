@@ -39,6 +39,7 @@ module Foobara
         find
         find_by
         query
+        query_all
         append
       ].freeze
 
@@ -320,6 +321,34 @@ module Foobara
 
           def run_query
             self.records = entity_class.find_many_by(inputs)
+          end
+        end
+      end
+
+      def create_query_all_command
+        entity_class = self.entity_class
+        domain = entity_class.domain
+        command_name = [*domain.scoped_full_path, "QueryAll#{entity_class.entity_type.scoped_short_name}"].join("::")
+
+        Util.make_class(command_name, Foobara::Command) do
+          define_method :entity_class do
+            entity_class
+          end
+
+          # TODO: can't use attributes: :attributes but should be able to.
+          inputs({})
+          result [entity_class]
+
+          def execute
+            run_query
+
+            records
+          end
+
+          attr_accessor :records
+
+          def run_query
+            self.records = entity_class.all
           end
         end
       end
