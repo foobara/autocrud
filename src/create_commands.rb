@@ -91,7 +91,7 @@ module Foobara
       def create_update_atom_command
         entity_class = self.entity_class
         domain = entity_class.domain
-        command_name = [*domain.scoped_full_path, "Update#{entity_class.entity_name}Atom"].join("::")
+        command_name = [*domain.scoped_full_path, "Update#{entity_class.entity_type.scoped_short_name}Atom"].join("::")
 
         Util.make_class command_name, Foobara::Command do
           define_method :entity_class do
@@ -126,7 +126,8 @@ module Foobara
       def create_update_aggregate_command
         entity_class = self.entity_class
         domain = entity_class.domain
-        command_name = [*domain.scoped_full_path, "Update#{entity_class.entity_name}Aggregate"].join("::")
+        command_name = [*domain.scoped_full_path,
+                        "Update#{entity_class.entity_type.scoped_short_name}Aggregate"].join("::")
 
         Util.make_class command_name, Foobara::Command do
           define_method :entity_class do
@@ -159,7 +160,7 @@ module Foobara
       def create_create_command
         entity_class = self.entity_class
         domain = entity_class.domain
-        command_name = [*domain.scoped_full_path, "Create#{entity_class.entity_name}"].join("::")
+        command_name = [*domain.scoped_full_path, "Create#{entity_class.entity_type.scoped_short_name}"].join("::")
 
         Util.make_class(command_name, Foobara::Command) do
           define_method :entity_class do
@@ -189,11 +190,11 @@ module Foobara
       def create_hard_delete_command
         entity_class = self.entity_class
         domain = entity_class.domain
-        command_name = [*domain.scoped_full_path, "HardDelete#{entity_class.entity_name}"].join("::")
+        command_name = [*domain.scoped_full_path, "HardDelete#{entity_class.entity_type.scoped_short_name}"].join("::")
 
         Util.make_class(command_name, Foobara::Command) do
           singleton_class.define_method :record_method_name do
-            @record_method_name ||= Util.underscore(entity_class.entity_name)
+            @record_method_name ||= Util.underscore(entity_class.entity_type.scoped_short_name)
           end
 
           foobara_delegate :record_method_name, to: :class
@@ -205,7 +206,7 @@ module Foobara
           # TODO: does this work with User instead of :User ?
           # We can't come up with a cleaner way to do this?
           # TODO: make this work with entity classes!! no reason not to and very inconvenient
-          inputs Util.underscore(entity_class.entity_name) => entity_class
+          inputs Util.underscore(entity_class.entity_type.scoped_short_name) => entity_class
           result entity_class
 
           load_all
@@ -225,7 +226,7 @@ module Foobara
       def create_find_command
         entity_class = self.entity_class
         domain = entity_class.domain
-        command_name = [*domain.scoped_full_path, "Find#{entity_class.entity_name}"].join("::")
+        command_name = [*domain.scoped_full_path, "Find#{entity_class.entity_type.scoped_short_name}"].join("::")
 
         Util.make_class(command_name, Foobara::Command) do
           define_method :entity_class do
@@ -264,7 +265,7 @@ module Foobara
       def create_find_by_command
         entity_class = self.entity_class
         domain = entity_class.domain
-        command_name = [*domain.scoped_full_path, "Find#{entity_class.entity_name}By"].join("::")
+        command_name = [*domain.scoped_full_path, "Find#{entity_class.entity_type.scoped_short_name}By"].join("::")
 
         Util.make_class(command_name, Foobara::Command) do
           define_method :entity_class do
@@ -298,7 +299,7 @@ module Foobara
       def create_query_command
         entity_class = self.entity_class
         domain = entity_class.domain
-        command_name = [*domain.scoped_full_path, "Query#{entity_class.entity_name}"].join("::")
+        command_name = [*domain.scoped_full_path, "Query#{entity_class.entity_type.scoped_short_name}"].join("::")
 
         Util.make_class(command_name, Foobara::Command) do
           define_method :entity_class do
@@ -347,9 +348,10 @@ module Foobara
 
         domain = entity_class.domain
         # TODO: group these by entity name?
-        command_name = [*domain.scoped_full_path, "AppendTo#{entity_class.entity_name}#{collection_name}"].join("::")
+        command_name = [*domain.scoped_full_path,
+                        "AppendTo#{entity_class.entity_type.scoped_short_name}#{collection_name}"].join("::")
 
-        entity_input_name = Util.underscore_sym(entity_class.entity_name)
+        entity_input_name = Util.underscore_sym(entity_class.entity_type.scoped_short_name)
 
         Util.make_class(command_name, Foobara::Command) do
           define_method :path_to_collection do
@@ -404,9 +406,10 @@ module Foobara
 
         domain = entity_class.domain
         # TODO: group these by entity name?
-        command_name = [*domain.scoped_full_path, "RemoveFrom#{entity_class.entity_name}#{collection_name}"].join("::")
+        command_name = [*domain.scoped_full_path,
+                        "RemoveFrom#{entity_class.entity_type.scoped_short_name}#{collection_name}"].join("::")
 
-        entity_input_name = Util.underscore_sym(entity_class.entity_name)
+        entity_input_name = Util.underscore_sym(entity_class.entity_type.scoped_short_name)
 
         Util.make_class(command_name, Foobara::Command) do
           Util.make_class("#{command_name}::ElementNotInCollectionError", Foobara::RuntimeError) do
