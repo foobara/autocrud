@@ -31,6 +31,8 @@ Gem::Specification.new do |spec|
 
   spec.require_paths = Dir["./lib"]
 
+  spec.add_dependency "foobara"
+
   # For more information and examples about making a new gem, check out our
   # guide at: https://bundler.io/guides/creating_gem.html
   spec.metadata["rubygems_mfa_required"] = "true"
