@@ -241,7 +241,7 @@ RSpec.describe Foobara::Autocrud::CreateType do
                            entity_class: "SomeOrg::SomeDomain::User" },
                 is_fatal: true,
                 key: "runtime.not_found",
-                message: "Could not find SomeOrg::SomeDomain::User for {:first_name=>\"bad first name\"}",
+                message: "Could not find SomeOrg::SomeDomain::User for {first_name: \"bad first name\"}",
                 path: [],
                 runtime_path: [],
                 symbol: :not_found

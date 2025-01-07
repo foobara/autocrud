@@ -1,6 +1,8 @@
-source "https://rubygems.org"
+require_relative "version"
 
-# Specify your gem's dependencies in commands.gemspec
+source "https://rubygems.org"
+ruby Foobara::Autocrud::Version::MINIMUM_RUBY_VERSION
+
 gemspec
 
 # Development dependencies go here
