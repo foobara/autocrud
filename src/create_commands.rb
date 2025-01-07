@@ -101,7 +101,7 @@ module Foobara
 
           # TODO: make this work with just inputs :UserAttributesForAtomUpdate
           # Should this be moved to this project instead of living in entities?
-          inputs Foobara::Command::EntityHelpers.type_declaration_for_record_atom_update(entity_class)
+          inputs entity_class.attributes_for_atom_update
           result entity_class # seems like we should just use nil?
 
           def execute
@@ -137,7 +137,7 @@ module Foobara
 
           # TODO: does this work with User instead of :User ?
           # We can't come up with a cleaner way to do this?
-          inputs Foobara::Command::EntityHelpers.type_declaration_for_record_aggregate_update(entity_class)
+          inputs entity_class.attributes_for_aggregate_update
           result entity_class # seems like we should just use nil?
 
           def execute
@@ -153,7 +153,7 @@ module Foobara
           end
 
           def update_record
-            Foobara::Command::EntityHelpers.update_aggregate(record, inputs)
+            record.update_aggregate(inputs)
           end
         end
       end
@@ -274,7 +274,7 @@ module Foobara
           end
 
           # TODO: can't use attributes: :attributes but should be able to.
-          inputs Command::EntityHelpers.type_declaration_for_find_by(entity_class)
+          inputs entity_class.attributes_for_find_by
           result entity_class
 
           possible_error Entity::NotFoundError
@@ -308,7 +308,7 @@ module Foobara
           end
 
           # TODO: can't use attributes: :attributes but should be able to.
-          inputs Command::EntityHelpers.type_declaration_for_find_by(entity_class)
+          inputs entity_class.attributes_for_find_by
           result [entity_class]
 
           def execute
